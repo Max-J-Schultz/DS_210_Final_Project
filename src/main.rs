@@ -6,7 +6,9 @@ use std::io::{BufRead, BufReader};
 fn main() {
     println!("Hello, world!");
     let data = read_data("facebook_combined.txt");
-    println!("{:?}", data);
+    let deg_cent = degree_centrality(&data, 24);
+    //println!("Degree Centrality: {:?}", deg_cent);
+
 }
 
 fn read_data(path: &str) -> HashMap<usize, usize> {
@@ -28,10 +30,22 @@ fn read_data(path: &str) -> HashMap<usize, usize> {
     }
     return graph;
 }
-/*fn degree_centrality(graph: HashMap<u32,u32> , node-id: u32) -> f32 {
-    println!("hello");
+fn degree_centrality(graph: &HashMap<usize,usize> , starting_node: usize) -> f64 {
+    let num_nodes = graph.len();
+    if !graph.contains_key(&starting_node) {
+    panic!("Starting node not found in the graph");
+    }
+    let neighbors = match graph.get(&starting_node) {
+      Some(neighbor_list) => neighbor_list,
+      None => return 0.0, // No neighbors, centrality is 0
+    };
+
+    let degree = (*neighbors as f64).ln() as f64;
+    println!("Number of nodes: {}", num_nodes);
+    println!("Degree Centrality: {}", degree);
+    return degree; 
 }
-fn bfs(graph: HashMap<u32,u32>, node_id: u32) -> HashMap<u32,u32> {
+/*fn bfs(graph: HashMap<u32,u32>, node_id: u32) -> HashMap<u32,u32> {
 
 }
 fn recommend_friends(graoh: HashMap<u32,u32>, node_id: u32, max_depth: u32) -> Vec<(u32,u32)> {
