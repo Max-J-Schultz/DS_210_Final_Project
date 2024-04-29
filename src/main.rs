@@ -6,7 +6,9 @@ use std::io::{BufRead, BufReader};
 fn main() {
     println!("Hello, world!");
     let data = read_data("facebook_combined.txt");
-    println!("{:?}", data);
+    //println!("{:?}", data);
+    let dist = modified_bfs(data, 3);
+    println!("{:?}", dist);
 }
 
 fn read_data(path: &str) -> HashMap<usize, usize> {
@@ -44,8 +46,35 @@ fn degree_centrality(graph: &HashMap<usize,usize> , starting_node: usize) -> f64
     println!("Degree Centrality: {}", degree);
     return degree; 
 }
-/*fn bfs(graph: HashMap<u32,u32>, node_id: u32) -> HashMap<u32,u32> {
 
+
+fn modified_bfs(graph: &HashMap<usize,usize>, starting_node: usize) {
+    let mut distance: Vec<Option<u32>> = vec![None;graph.n];
+    distance[starting_node] = Some(0); 
+    let mut queue: VecDeque<Vertex> = VecDeque::new();
+    queue.push_back(starting_node);
+    while let Some(v) = queue.pop_front() { // new unprocessed vertex
+        for u in graph.outedges[v].iter() {
+            if let None = distance[*u] { // consider all unprocessed neighbors of v
+                distance[*u] = Some(distance[v].unwrap() + 1);
+                queue.push_back(*u);
+            }
+        }
+    }
+    print!("vertex:distance");
+    for v in 0..graph.n {
+        print!("   {}:{}",v,distance[v].unwrap());
+    }
+    println!();
+    for i in 0..graph.n {
+        println!("Distances from node {}", i);
+        compute_and_print_distance_bfs(i, &graph);
+    }
+}
+
+
+/*fn bfs(graph: HashMap<u32,u32>, node_id: u32) -> HashMap<u32,u32> {
+hello world
 }
 fn recommend_friends(graoh: HashMap<u32,u32>, node_id: u32, max_depth: u32) -> Vec<(u32,u32)> {
 
