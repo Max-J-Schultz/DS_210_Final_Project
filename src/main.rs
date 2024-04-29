@@ -7,17 +7,11 @@ use std::collections::VecDeque;
 fn main() {
     println!("Hello, world!");
     let data = read_data("facebook_combined.txt");
-<<<<<<< HEAD
     //let deg_cent = degree_centrality(&data, 24);
     //println!("Degree Centrality: {:?}", deg_cent);
     let deg = modified_bfs(&data, 4);
     println!("{:?}", deg);
     //println!("{:?}", data);
-=======
-    //println!("{:?}", data);
-    let dist = modified_bfs(data, 3);
-    println!("{:?}", dist);
->>>>>>> 409d9fa0abb1ed1ac9fd83c2aadd510603a3447c
 }
 
 fn read_data(path: &str) -> HashMap<usize, Vec<usize>> {
@@ -41,7 +35,6 @@ fn read_data(path: &str) -> HashMap<usize, Vec<usize>> {
     return graph;
 }
 
-<<<<<<< HEAD
 fn degree_centrality(graph: &HashMap<usize, usize> , start: usize) -> f64 {
     let num_nodes = graph.len();
     if !graph.contains_key(&start) {
@@ -50,16 +43,6 @@ fn degree_centrality(graph: &HashMap<usize, usize> , start: usize) -> f64 {
     let neighbors = match graph.get(&start) {
       Some(neighbor_list) => neighbor_list,
       None => return 0.0, // event that there are no neighbors, the centrality is 0
-=======
-fn degree_centrality(graph: &HashMap<usize,usize> , starting_node: usize) -> f64 {
-    let num_nodes = graph.len();
-    if !graph.contains_key(&starting_node) {
-    panic!("Starting node not found in the graph");
-    }
-    let neighbors = match graph.get(&starting_node) {
-      Some(neighbor_list) => neighbor_list,
-      None => return 0.0, 
->>>>>>> 409d9fa0abb1ed1ac9fd83c2aadd510603a3447c
     };
 
     let degree = (*neighbors as f64).ln() as f64;
@@ -68,7 +51,6 @@ fn degree_centrality(graph: &HashMap<usize,usize> , starting_node: usize) -> f64
     return degree; 
 }
 
-<<<<<<< HEAD
 fn modified_bfs(graph: &HashMap<usize, Vec<usize>>, starting_node: usize) -> Vec<(usize, u32)> {
     let mut distance: Vec<Option<u32>> = vec![None; graph.len()];
     distance[starting_node] = Some(0); // <= we know this distance
@@ -91,38 +73,6 @@ fn modified_bfs(graph: &HashMap<usize, Vec<usize>>, starting_node: usize) -> Vec
     return sorted_result;
 }
 
-=======
-
-fn modified_bfs(graph: &HashMap<usize,usize>, starting_node: usize) {
-    let mut distance: Vec<Option<u32>> = vec![None;graph.n];
-    distance[starting_node] = Some(0); 
-    let mut queue: VecDeque<Vertex> = VecDeque::new();
-    queue.push_back(starting_node);
-    while let Some(v) = queue.pop_front() { // new unprocessed vertex
-        for u in graph.outedges[v].iter() {
-            if let None = distance[*u] { // consider all unprocessed neighbors of v
-                distance[*u] = Some(distance[v].unwrap() + 1);
-                queue.push_back(*u);
-            }
-        }
-    }
-    print!("vertex:distance");
-    for v in 0..graph.n {
-        print!("   {}:{}",v,distance[v].unwrap());
-    }
-    println!();
-    for i in 0..graph.n {
-        println!("Distances from node {}", i);
-        compute_and_print_distance_bfs(i, &graph);
-    }
-}
-
-
-/*fn bfs(graph: HashMap<u32,u32>, node_id: u32) -> HashMap<u32,u32> {
-hello world
-}
-fn recommend_friends(graoh: HashMap<u32,u32>, node_id: u32, max_depth: u32) -> Vec<(u32,u32)> {
->>>>>>> 409d9fa0abb1ed1ac9fd83c2aadd510603a3447c
 
 /* 
 recommend_friends()
