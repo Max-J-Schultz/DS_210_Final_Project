@@ -5,14 +5,13 @@ use std::io::{BufRead, BufReader};
 use std::collections::VecDeque;
 
 fn main() {
-    println!("Hello, world!");
     let data = read_data("facebook_combined.txt");
     //let deg_cent = degree_centrality(&data, 24);
     //println!("Degree Centrality: {:?}", deg_cent);
     //let deg = modified_bfs(&data, 4);
    //println!("{:?}", deg);
     //println!("{:?}", data);
-    let send_friend_request = recommend_friends(&data, 74);
+    let send_friend_request = recommend_friends(&data, 74, 1.0);
     println!("You should send a friend request to these users: {:?}", send_friend_request); 
 }
 
@@ -48,8 +47,8 @@ fn degree_centrality(graph: &HashMap<usize, Vec<usize>> , start: usize) -> f64 {
     };
 
     let degree = (*neighbors).len() as f64;
-    println!("Number of nodes: {}", num_nodes);
-    println!("Degree Centrality: {}", degree);
+    //println!("Number of nodes: {}", num_nodes);
+    //println!("Degree Centrality: {}", degree);
     return degree; 
 }
 
@@ -70,37 +69,40 @@ fn modified_bfs(graph: &HashMap<usize, Vec<usize>>, starting_node: usize) -> Vec
             }
         }
     }
+    
     let mut sorted_result: Vec<(usize, u32)> = result.into_iter().collect();
     sorted_result.sort_by(|a, b| a.1.cmp(&b.1));
     return sorted_result;
 }
-fn recommend_friends(graph: &HashMap<usize, Vec<usize>>, starting_node: usize) -> Vec<(usize, u32)> {
-    // Step 1: call modified_bfs and degree_centrality on the starting node
+
+fn recommend_friends(graph: &HashMap<usize, Vec<usize>>, starting_node: usize, max_difference: f64) -> Vec<usize> {
     let bfs_result = modified_bfs(graph, starting_node);
     let starting_node_centrality = degree_centrality(graph, starting_node);
-
-    // Step 2: store the results in a vector
     let mut recommendations: Vec<(usize, u32)> = Vec::new();
     for &(node, distance) in &bfs_result {
         let centrality = degree_centrality(graph, node);
-        if centrality > starting_node_centrality {
+        if centrality > starting_node_centrality - max_difference  && centrality < starting_node_centrality + max_difference {
             recommendations.push((node, distance));
         }
     }
 
-    // Step 3: for each remaining node, call degree_centrality on its direct friends and filter out nodes whose degree centrality is not greater than the starting node
     let mut updated_recommendations: Vec<(usize, u32)> = Vec::new();
+    let mut recommended_friends: HashSet<usize> = HashSet::new();
     for &mut (node, _) in &mut recommendations {
         let friends = &graph[&node]; // Get direct friends
         for &friend in friends {
             let friend_centrality = degree_centrality(graph, friend);
-            if friend_centrality > starting_node_centrality {
+            if friend_centrality > starting_node_centrality - max_difference{
                 let friend_distance = bfs_result.iter().find(|&&x| x.0 == friend).unwrap().1;
-                updated_recommendations.push((friend, friend_distance));
+                if !recommended_friends.contains(&friend){
+                    updated_recommendations.push((friend, friend_distance));
+                    recommended_friends.insert(friend);
+                }
             }
         }
     }
-    return updated_recommendations;
+    let friend_rec: Vec<usize> = updated_recommendations.into_iter().map(|(friend, _)| friend).collect();
+    return friend_rec;
 }
 
 /* 
