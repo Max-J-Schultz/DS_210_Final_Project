@@ -12,7 +12,7 @@ fn main() {
    //println!("{:?}", deg);
     //println!("{:?}", data);
     let send_friend_request = recommend_friends(&data, 74, 1.0);
-    println!("You should send a friend request to these users: {:?}", send_friend_request); 
+    println!("{:?}", send_friend_request); 
 }
 
 fn read_data(path: &str) -> HashMap<usize, Vec<usize>> {
@@ -102,9 +102,35 @@ fn recommend_friends(graph: &HashMap<usize, Vec<usize>>, starting_node: usize, m
         }
     }
     let friend_rec: Vec<usize> = updated_recommendations.into_iter().map(|(friend, _)| friend).collect();
+    println!("These are the users we recommend:");
     return friend_rec;
 }
 
+fn influencer(graph: &HashMap<usize, Vec<usize>>) -> Vec<usize> {
+    let mut top_centralities: Vec<(usize, f64)> = Vec::new();
+    for (&node, _) in graph {
+        // Calculate degree centrality for the current node
+        let centrality = degree_centrality(graph, node);
+        
+        // Push the node and its centrality to the vector
+        top_centralities.push((node, centrality));
+    }
+    top_centralities.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
+    let top_nodes: Vec<usize> = top_centralities.iter().map(|&(node, _)| node).collect();
+    top_nodes
+}
+
+/*fn user_importance_vs_influencer(graph: &HashMap<usize, Vec<usize>>, starting_node: usize) {
+    let centralities: Vec<(usize, usize)> = Vec::new();
+    let max_centralities: usize = degree_centrality(graph, starting_node);
+
+   
+    let bfs_pt2 = modified_bfs(&graph, starting_node);
+    for &mut (node, distance) in &bfs_pt2 {
+
+    }
+}
+*/
 /* 
 recommend_friends()
 - takes the adjacency list, node id, and max_depth as inputs/ arguments
