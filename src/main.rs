@@ -6,13 +6,12 @@ use std::collections::VecDeque;
 
 fn main() {
     let data = read_data("facebook_combined.txt");
-    //let deg_cent = degree_centrality(&data, 24);
-    //println!("Degree Centrality: {:?}", deg_cent);
-    //let deg = modified_bfs(&data, 4);
-   //println!("{:?}", deg);
-    //println!("{:?}", data);
     let send_friend_request = recommend_friends(&data, 74, 1.0);
     println!("{:?}", send_friend_request); 
+    let determine_importance = user_importance(&data, 74);
+    println!("{:?}", determine_importance);
+    let influencing_nodes = influencer(&data);
+    println!("The top three influential nodes in this network are: {:?}", influencing_nodes);
 }
 
 fn read_data(path: &str) -> HashMap<usize, Vec<usize>> {
@@ -103,6 +102,7 @@ fn recommend_friends(graph: &HashMap<usize, Vec<usize>>, starting_node: usize, m
     }
     let friend_rec: Vec<usize> = updated_recommendations.into_iter().map(|(friend, _)| friend).collect();
     println!("These are the users we recommend:");
+    println!("---------------------------------");
     return friend_rec;
 }
 
@@ -116,24 +116,22 @@ fn influencer(graph: &HashMap<usize, Vec<usize>>) -> Vec<usize> {
         top_centralities.push((node, centrality));
     }
     top_centralities.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
-    let top_nodes: Vec<usize> = top_centralities.iter().map(|&(node, _)| node).collect();
+    let top_nodes: Vec<usize> = top_centralities.iter().map(|&(node, _)| node).take(3).collect();
     top_nodes
 }
 
-/*fn user_importance_vs_influencer(graph: &HashMap<usize, Vec<usize>>, starting_node: usize) {
-    let centralities: Vec<(usize, usize)> = Vec::new();
-    let max_centralities: usize = degree_centrality(graph, starting_node);
-
-   
-    let bfs_pt2 = modified_bfs(&graph, starting_node);
-    for &mut (node, distance) in &bfs_pt2 {
-
+fn user_importance(graph: &HashMap<usize, Vec<usize>>, starting_node: usize) {
+    let starting_degree: f64 = degree_centrality(graph, starting_node);
+    let influencers: Vec<usize> = influencer(graph);
+    if let Some(top_centrality) = influencers.first().map(|&node| degree_centrality(graph, node)){
+        let lower = top_centrality * 0.90;
+        let upper = top_centrality * 1.10;
+        if starting_degree >= lower && starting_degree <= upper {
+            println!("---------------------------------");
+            println!("This node is a popular user — they are probably not shy!");
+        } else {
+            println!("---------------------------------");
+            println!("This node isn't very connected — they are probably shy!");
+        }
     }
 }
-*/
-/* 
-recommend_friends()
-- takes the adjacency list, node id, and max_depth as inputs/ arguments
-- calls bfs function to find closely related users for the specified max_depth
-- returns a vector of (nodes, degrees) sorted by smallest degree of separation
-*/
