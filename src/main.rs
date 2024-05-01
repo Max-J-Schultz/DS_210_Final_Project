@@ -6,24 +6,30 @@ use std::collections::VecDeque;
 
 fn main() {
     let data = read_data("facebook_combined.txt");
-    let send_friend_request = recommend_friends(&data, 74, 1.0);
+    /* 
+    let send_friend_request = recommend_friends(&data, 25, 1.0);
     println!("{:?}", send_friend_request); 
-    let determine_importance = user_importance(&data, 74);
+    let determine_importance = user_importance(&data, 25);
     println!("{:?}", determine_importance);
     let influencing_nodes = influencer(&data);
     println!("The top three influential nodes in this network are: {:?}", influencing_nodes);
 }
-
+*/ 
+    let bfs = modified_bfs(&data, 24);
+    println!{"{:?}", bfs};
+}
 fn read_data(path: &str) -> HashMap<usize, Vec<usize>> {
     let file = File::open(path).expect("Cannot Open File");
     let reader = BufReader::new(file);
     let mut lines = reader.lines();
+    // my graph will be represented as an adjacency list 
     let mut graph: HashMap<usize, Vec<usize>> = HashMap::new();
     if let Some(Ok(first_line)) = lines.next() {
         for line in lines {
             if let Ok(line_str) = line {
                 let mut iter = line_str.trim().split_whitespace();
                 if let (Some(u_str), Some(v_str)) = (iter.next(), iter.next()) {
+                    // so essentially if there is some (u,v) pair, then it will be parsed and inputted in the correct place
                     let u = u_str.parse::<usize>().expect("Failed to parse integer");
                     let v = v_str.parse::<usize>().expect("Failed to parse integer");
                     graph.entry(u).or_insert_with(Vec::new).push(v);
@@ -42,24 +48,26 @@ fn degree_centrality(graph: &HashMap<usize, Vec<usize>> , start: usize) -> f64 {
     }
     let neighbors = match graph.get(&start) {
       Some(neighbor_list) => neighbor_list,
-      None => return 0.0, // event that there are no neighbors, the centrality is 0
+      None => return 0.0, // in the event that there are no neighbors, the centrality is 0
     };
-
-    let degree = (*neighbors).len() as f64;
-    //println!("Number of nodes: {}", num_nodes);
-    //println!("Degree Centrality: {}", degree);
+    // the degree cetrality here will be defined as the number of neigbors pointing at it
+    let degree = (*neighbors).len() as f64; 
     return degree; 
 }
 
 fn modified_bfs(graph: &HashMap<usize, Vec<usize>>, starting_node: usize) -> Vec<(usize, u32)> {
     let mut distance: Vec<Option<u32>> = vec![None; graph.len()];
     distance[starting_node] = Some(0); 
+    // the VecDeque will initialize a queue — whatever you put in comes out in the same order 
     let mut queue: VecDeque<usize> = VecDeque::new();
     queue.push_back(starting_node);
     let mut result: HashMap<usize, u32> = HashMap::new();
+    // we will use a while loop so that it runs until there is nothing left to consider 
     while let Some(v) = queue.pop_front() {
         if let Some(neighbors) = graph.get(&v) {
             for &u in neighbors.iter() {
+                // here we are looking at the neighbors and visiting the neighbor whose distance is none
+                // this essentially means that they are unseen — i.e the crux of BFS 
                 if distance[u].is_none() {
                     distance[u] = Some(distance[v].unwrap() + 1);
                     queue.push_back(u);
@@ -70,11 +78,13 @@ fn modified_bfs(graph: &HashMap<usize, Vec<usize>>, starting_node: usize) -> Vec
     }
     
     let mut sorted_result: Vec<(usize, u32)> = result.into_iter().collect();
+    // this is a little complicated but essentially what I did was use a closure we learned about to sort the second element
+    // of the result variable in ascending order - this is so we have the degrees of separation sorted 
     sorted_result.sort_by(|a, b| a.1.cmp(&b.1));
     return sorted_result;
 }
 
-fn recommend_friends(graph: &HashMap<usize, Vec<usize>>, starting_node: usize, max_difference: f64) -> Vec<usize> {
+fn recommend_friends(graph: &HashMap<usize, Vec<usize>>, starting_node: usize, max_difference: f64) -> HashSet<usize> {
     let bfs_result = modified_bfs(graph, starting_node);
     let starting_node_centrality = degree_centrality(graph, starting_node);
     let mut recommendations: Vec<(usize, u32)> = Vec::new();
@@ -100,9 +110,8 @@ fn recommend_friends(graph: &HashMap<usize, Vec<usize>>, starting_node: usize, m
             }
         }
     }
-    let friend_rec: Vec<usize> = updated_recommendations.into_iter().map(|(friend, _)| friend).collect();
+    let friend_rec: HashSet<usize> = updated_recommendations.into_iter().map(|(friend, _)| friend).take(10).collect();
     println!("These are the users we recommend:");
-    println!("---------------------------------");
     return friend_rec;
 }
 
@@ -120,18 +129,17 @@ fn influencer(graph: &HashMap<usize, Vec<usize>>) -> Vec<usize> {
     top_nodes
 }
 
-fn user_importance(graph: &HashMap<usize, Vec<usize>>, starting_node: usize) {
+fn user_importance(graph: &HashMap<usize, Vec<usize>>, starting_node: usize) -> () {
     let starting_degree: f64 = degree_centrality(graph, starting_node);
     let influencers: Vec<usize> = influencer(graph);
     if let Some(top_centrality) = influencers.first().map(|&node| degree_centrality(graph, node)){
         let lower = top_centrality * 0.90;
+        // obviously no node can have a cetrality higher than the top_centrality as we have previously defined it
         let upper = top_centrality * 1.10;
         if starting_degree >= lower && starting_degree <= upper {
-            println!("---------------------------------");
-            println!("This node is a popular user — they are probably not shy!");
+            println!("Additionally, this user is among the most popular in the network — they are probably not shy!");
         } else {
-            println!("---------------------------------");
-            println!("This node isn't very connected — they are probably shy!");
+            println!("Additionally, this user isn't very connected — they are probably shy!");
         }
     }
 }
