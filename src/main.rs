@@ -53,7 +53,6 @@ fn degree_centrality(graph: &HashMap<usize, Vec<usize>> , start: usize) -> f64 {
     let degree = (*neighbors).len() as f64; 
     return degree; 
 }
-//use std::collections::{HashMap, HashSet, VecDeque};
 
 fn modified_bfs(graph: &HashMap<usize, Vec<usize>>, starting_node: usize) -> Vec<(usize, u32)> {
     let mut distance: HashMap<usize, u32> = HashMap::new();
