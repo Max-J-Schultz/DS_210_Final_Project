@@ -1,28 +1,27 @@
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::fs::File;
-use std::io::{BufRead, BufReader};
+use std::io::BufRead;
+use std::io::BufReader;
 use std::collections::VecDeque;
 
 fn main() {
     let data = read_data("facebook_combined.txt");
-    /* 
     let send_friend_request = recommend_friends(&data, 25, 1.0);
     println!("{:?}", send_friend_request); 
     let determine_importance = user_importance(&data, 25);
     println!("{:?}", determine_importance);
     let influencing_nodes = influencer(&data);
     println!("The top three influential nodes in this network are: {:?}", influencing_nodes);
+    //let bfs = modified_bfs(&data, 24);
+    //println!{"{:?}", bfs};
 }
-*/ 
-    let bfs = modified_bfs(&data, 24);
-    println!{"{:?}", bfs};
-}
+
 fn read_data(path: &str) -> HashMap<usize, Vec<usize>> {
     let file = File::open(path).expect("Cannot Open File");
     let reader = BufReader::new(file);
     let mut lines = reader.lines();
-    // my graph will be represented as an adjacency list 
+    // my graph will be represented as an adjacency list through my implementation of the HashMap
     let mut graph: HashMap<usize, Vec<usize>> = HashMap::new();
     if let Some(Ok(first_line)) = lines.next() {
         for line in lines {
@@ -78,7 +77,7 @@ fn modified_bfs(graph: &HashMap<usize, Vec<usize>>, starting_node: usize) -> Vec
     }
     
     let mut sorted_result: Vec<(usize, u32)> = result.into_iter().collect();
-    // this is a little complicated but essentially what I did was use a closure we learned about to sort the second element
+    // this is a little complicated but essentially what i did was use a closure we learned about to sort the second element
     // of the result variable in ascending order - this is so we have the degrees of separation sorted 
     sorted_result.sort_by(|a, b| a.1.cmp(&b.1));
     return sorted_result;
@@ -90,6 +89,8 @@ fn recommend_friends(graph: &HashMap<usize, Vec<usize>>, starting_node: usize, m
     let mut recommendations: Vec<(usize, u32)> = Vec::new();
     for &(node, distance) in &bfs_result {
         let centrality = degree_centrality(graph, node);
+        // i am iteratively going through each result of the bfs and degree centrality function and pusing it to the recomendations under 
+        // the certain constraints defined here 
         if centrality > starting_node_centrality - max_difference  && centrality < starting_node_centrality + max_difference {
             recommendations.push((node, distance));
         }
@@ -98,9 +99,10 @@ fn recommend_friends(graph: &HashMap<usize, Vec<usize>>, starting_node: usize, m
     let mut updated_recommendations: Vec<(usize, u32)> = Vec::new();
     let mut recommended_friends: HashSet<usize> = HashSet::new();
     for &mut (node, _) in &mut recommendations {
-        let friends = &graph[&node]; // Get direct friends
+        let friends = &graph[&node]; // get direct friends
         for &friend in friends {
             let friend_centrality = degree_centrality(graph, friend);
+            // these are added constraints to ensure only true recommendations are returned.. it must be limited 
             if friend_centrality > starting_node_centrality - max_difference{
                 let friend_distance = bfs_result.iter().find(|&&x| x.0 == friend).unwrap().1;
                 if !recommended_friends.contains(&friend){
@@ -110,6 +112,8 @@ fn recommend_friends(graph: &HashMap<usize, Vec<usize>>, starting_node: usize, m
             }
         }
     }
+    // here i am limiting the amount of recommendations to 10 — as this is most common for applications 
+    // this shouldn't be a problem since it is stored in a HashSet where order doesn't inherently matter 
     let friend_rec: HashSet<usize> = updated_recommendations.into_iter().map(|(friend, _)| friend).take(10).collect();
     println!("These are the users we recommend:");
     return friend_rec;
@@ -118,28 +122,32 @@ fn recommend_friends(graph: &HashMap<usize, Vec<usize>>, starting_node: usize, m
 fn influencer(graph: &HashMap<usize, Vec<usize>>) -> Vec<usize> {
     let mut top_centralities: Vec<(usize, f64)> = Vec::new();
     for (&node, _) in graph {
-        // Calculate degree centrality for the current node
+        // calculate degree centrality iterativly for current nodes
         let centrality = degree_centrality(graph, node);
-        
-        // Push the node and its centrality to the vector
+        // push the node and its centrality to the vector
         top_centralities.push((node, centrality));
     }
+    // again we are using these closures and the sort method to sont them in ascending order
     top_centralities.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap());
+    // then we are defining the influential users as the top three node with the highest degree centralities 
     let top_nodes: Vec<usize> = top_centralities.iter().map(|&(node, _)| node).take(3).collect();
     top_nodes
 }
 
-fn user_importance(graph: &HashMap<usize, Vec<usize>>, starting_node: usize) -> () {
+fn user_importance(graph: &HashMap<usize, Vec<usize>>, starting_node: usize) {
     let starting_degree: f64 = degree_centrality(graph, starting_node);
     let influencers: Vec<usize> = influencer(graph);
     if let Some(top_centrality) = influencers.first().map(|&node| degree_centrality(graph, node)){
         let lower = top_centrality * 0.90;
         // obviously no node can have a cetrality higher than the top_centrality as we have previously defined it
+        // but this is purely meant as an interval 
         let upper = top_centrality * 1.10;
+        // these are the final constraint determining if teh starting_node is essentiall introverted or extroverted 
         if starting_degree >= lower && starting_degree <= upper {
             println!("Additionally, this user is among the most popular in the network — they are probably not shy!");
         } else {
             println!("Additionally, this user isn't very connected — they are probably shy!");
+            // for reference, i am only printing this within the function to limit the code in main 
         }
     }
 }
