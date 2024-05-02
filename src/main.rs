@@ -7,9 +7,9 @@ use std::collections::VecDeque;
 
 fn main() {
     let data = read_data("facebook_combined.txt");
-    let send_friend_request = recommend_friends(&data, 25, 1.0);
+    let send_friend_request = recommend_friends(&data, 74, 1.0);
     println!("{:?}", send_friend_request); 
-    let determine_importance = user_importance(&data, 25);
+    let determine_importance = user_importance(&data, 74);
     println!("{:?}", determine_importance);
     let influencing_nodes = influencer(&data);
     println!("The top three influential nodes in this network are: {:?}", influencing_nodes);
@@ -53,10 +53,11 @@ fn degree_centrality(graph: &HashMap<usize, Vec<usize>> , start: usize) -> f64 {
     let degree = (*neighbors).len() as f64; 
     return degree; 
 }
+//use std::collections::{HashMap, HashSet, VecDeque};
 
 fn modified_bfs(graph: &HashMap<usize, Vec<usize>>, starting_node: usize) -> Vec<(usize, u32)> {
-    let mut distance: Vec<Option<u32>> = vec![None; graph.len()];
-    distance[starting_node] = Some(0); 
+    let mut distance: HashMap<usize, u32> = HashMap::new();
+    distance.insert(starting_node, 0); 
     // the VecDeque will initialize a queue — whatever you put in comes out in the same order 
     let mut queue: VecDeque<usize> = VecDeque::new();
     queue.push_back(starting_node);
@@ -64,13 +65,14 @@ fn modified_bfs(graph: &HashMap<usize, Vec<usize>>, starting_node: usize) -> Vec
     // we will use a while loop so that it runs until there is nothing left to consider 
     while let Some(v) = queue.pop_front() {
         if let Some(neighbors) = graph.get(&v) {
+            // here we are looking at the neighbors and visiting the neighbor whose distance is none
+            // this essentially means that they are unseen — i.e the crux of BFS 
             for &u in neighbors.iter() {
-                // here we are looking at the neighbors and visiting the neighbor whose distance is none
-                // this essentially means that they are unseen — i.e the crux of BFS 
-                if distance[u].is_none() {
-                    distance[u] = Some(distance[v].unwrap() + 1);
+                if !distance.contains_key(&u) {
+                    let dist = *distance.get(&v).unwrap() + 1;
+                    distance.insert(u, dist);
                     queue.push_back(u);
-                    result.insert(u, distance[u].unwrap());
+                    result.insert(u, dist);
                 }
             }
         }
@@ -150,4 +152,15 @@ fn user_importance(graph: &HashMap<usize, Vec<usize>>, starting_node: usize) {
             // for reference, i am only printing this within the function to limit the code in main 
         }
     }
+}
+#[test]
+fn test_recommend_friends() {
+    let mut graph = HashMap::new();
+    graph.insert(1, vec![2, 3]);
+    graph.insert(2, vec![1, 3, 4]);
+    graph.insert(3, vec![1, 2, 4]);
+    graph.insert(4, vec![2, 3]);
+    let recommended_friends = recommend_friends(&graph, 1, 1.0);
+    // compiler recommended the use of the .cloned() method for precise type matching in the HashSet
+    assert_eq!(recommended_friends, [2, 3].iter().cloned().collect());
 }
